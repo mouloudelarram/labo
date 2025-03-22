@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratory Materials Management</title>
+    <style>
+        :root {
+            --primary: #3498db;
+            --primary-dark: #2980b9;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --success: #2ecc71;
+            --grey: #ecf0f1;
+            --dark: #34495e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+        }
+        
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+        }
+        
+        .search-container {
+            flex-grow: 1;
+            margin-right: 1rem;
+        }
+        
+        #search {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+        }
+        
+        .materials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .material-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+        
+        .material-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        
+        .status-indicator {
+            height: 8px;
+        }
+        
+        .status-undamaged {
+            background-color: var(--success);
+        }
+        
+        .status-maintenance {
+            background-color: var(--warning);
+        }
+        
+        .status-damaged {
+            background-color: var(--danger);
+        }
+        
+        .card-content {
+            padding: 1.5rem;
+        }
+        
+        .card-title {
+            margin-bottom: 0.75rem;
+            color: var(--dark);
+        }
+        
+        .card-meta {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .status-tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .tag-undamaged {
+            background-color: #e8f8f5;
+            color: var(--success);
+        }
+        
+        .tag-maintenance {
+            background-color: #fef9e7;
+            color: var(--warning);
+        }
+        
+        .tag-damaged {
+            background-color: #fdedec;
+            color: var(--danger);
+        }
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            position: relative;
+            background-color: white;
+            margin: 5% auto;
+            width: 80%;
+            max-width: 800px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: modalFade 0.3s ease-in-out;
+        }
+        
+        @keyframes modalFade {
+            from {opacity: 0; transform: translateY(-20px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+        
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #eee;
+            text-align: right;
+        }
+        
+        .close-btn {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #7f8c8d;
+        }
+        
+        .close-btn:hover {
+            color: var(--dark);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        textarea {
+            min-height: 150px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .tab {
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom-color: var(--primary);
+            color: var(--primary);
+            font-weight: 500;
+        }
+        
+        .tab-content {
+            padding: 1.5rem 0;
+        }
+        
+        .tab-panel {
+            display: none;
+        }
+        
+        .tab-panel.active {
+            display: block;
+        }
+        
+        .maintenance-steps {
+            list-style-position: inside;
+            padding-left: 1rem;
+        }
+        
+        .maintenance-steps li {
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+        
+        .filter-dropdown {
+            padding: 0.75rem;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            background-color: white;
+        }
+        
+        .filter-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        .filter-container label {
+            margin-right: 0.5rem;
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Laboratory Materials Management</h1>
+    </header>
+    
+    <main>
+        <div class="controls">
+            <div class="search-container">
+                <input type="text" id="search" placeholder="Search materials...">
+            </div>
+            <div class="filter-container">
+                <label for="status-filter">Filter by:</label>
+                <select id="status-filter" class="filter-dropdown">
+                    <option value="all">All Status</option>
+                    <option value="undamaged">Undamaged</option>
+                    <option value="maintenance">Maintenance Required</option>
+                    <option value="damaged">Damaged</option>
+                </select>
+            </div>
+            <button id="add-material-btn" class="btn btn-primary">Add New Material</button>
+        </div>
+        
+        <div class="materials-grid" id="materials-list">
+            <!-- Materials will be dynamically added here -->
+        </div>
+    </main>
+    
+    <!-- Material Detail Modal -->
+    <div id="material-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="material-modal-title">Material Details</h2>
+                <span class="close-btn" id="close-material-modal">&times;</span>
+            </div>
+            <div class="tabs">
+                <div class="tab active" data-tab="details">Details</div>
+                <div class="tab" data-tab="maintenance">Maintenance Guide</div>
+                <div class="tab" data-tab="history">History</div>
+            </div>
+            <div class="modal-body">
+                <div class="tab-panel active" id="details-panel">
+                    <div id="material-details">
+                        <!-- Material details will be populated here -->
+                    </div>
+                </div>
+                <div class="tab-panel" id="maintenance-panel">
+                    <div id="maintenance-guide">
+                        <!-- Maintenance guide will be populated here -->
+                    </div>
+                </div>
+                <div class="tab-panel" id="history-panel">
+                    <div id="material-history">
+                        <!-- Material history will be populated here -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="edit-material-btn" class="btn btn-primary">Edit</button>
+                <button id="delete-material-btn" class="btn btn-danger">Delete</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add/Edit Material Modal -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="edit-modal-title">Add New Material</h2>
+                <span class="close-btn" id="close-edit-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="material-form">
+                    <input type="hidden" id="material-id">
+                    
+                    <div class="form-group">
+                        <label for="material-name">Name</label>
+                        <input type="text" id="material-name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="material-category">Category</label>
+                        <input type="text" id="material-category" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="material-location">Location</label>
+                        <input type="text" id="material-location" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="material-status">Status</label>
+                        <select id="material-status" required>
+                            <option value="undamaged">Undamaged</option>
+                            <option value="maintenance">Maintenance Required</option>
+                            <option value="damaged">Damaged</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="material-description">Description</label>
+                        <textarea id="material-description"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="maintenance-instructions">Maintenance Instructions</label>
+                        <textarea id="maintenance-instructions"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="save-material-btn" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Sample data - would be replaced by database in a real application
+        let materials = [
+            {
+                id: 1,
+                name: "Microscope XL-500",
+                category: "Optical Equipment",
+                location: "Room 101",
+                status: "undamaged",
+                description: "High-powered microscope with 500x magnification capability.",
+                maintenanceInstructions: "1. Clean lenses with lens cleaner and microfiber cloth only.\n2. Check calibration monthly.\n3. Lubricate moving parts every 6 months with approved lubricant.\n4. Replace bulb when dimming occurs.",
+                lastUpdated: "2025-02-15",
+                history: [
+                    { date: "2025-01-10", action: "Calibration", notes: "Regular maintenance" },
+                    { date: "2024-11-05", action: "Bulb Replacement", notes: "Preventive maintenance" }
+                ]
+            },
+            {
+                id: 2,
+                name: "Centrifuge C-300",
+                category: "Separation Equipment",
+                location: "Room 102",
+                status: "maintenance",
+                description: "Medium capacity centrifuge capable of 5000 RPM.",
+                maintenanceInstructions: "1. Check rotor balance before each use.\n2. Clean the chamber weekly with approved disinfectant.\n3. Lubricate motor bearings quarterly.\n4. Check speed calibration every 6 months.\n5. Inspect rotor for wear and tear annually.",
+                lastUpdated: "2025-03-10",
+                history: [
+                    { date: "2025-03-10", action: "Motor Noise Detected", notes: "Requires bearing inspection" },
+                    { date: "2025-01-22", action: "Regular Cleaning", notes: "Performed by lab technician" }
+                ]
+            },
+            {
+                id: 3,
+                name: "pH Meter HI-2210",
+                category: "Analytical Equipment",
+                location: "Room 103",
+                status: "damaged",
+                description: "Digital pH meter with temperature compensation.",
+                maintenanceInstructions: "1. Calibrate with standard solutions weekly.\n2. Clean electrode with distilled water after each use.\n3. Store electrode in storage solution when not in use.\n4. Replace electrode annually or when response time slows.\n5. Check battery level monthly.",
+                lastUpdated: "2025-03-05",
+                history: [
+                    { date: "2025-03-05", action: "Electrode Broken", notes: "Requires replacement" },
+                    { date: "2025-02-20", action: "Calibration", notes: "Performed with pH 4, 7, 10 buffers" }
+                ]
+            },
+            {
+                id: 4,
+                name: "Bunsen Burner",
+                category: "Heating Equipment",
+                location: "Room 101",
+                status: "undamaged",
+                description: "Standard laboratory burner for heating and sterilization.",
+                maintenanceInstructions: "1. Check gas connections for leaks monthly.\n2. Clean burner head when residue accumulates.\n3. Ensure air adjustment collar moves freely.\n4. Replace tubing annually or when cracks appear.",
+                lastUpdated: "2025-02-28",
+                history: [
+                    { date: "2025-02-28", action: "Gas Line Inspection", notes: "No issues found" },
+                    { date: "2024-12-15", action: "Cleaning", notes: "Burner head cleaned" }
+                ]
+            },
+            {
+                id: 5,
+                name: "Analytical Balance",
+                category: "Measurement Equipment",
+                location: "Room 105",
+                status: "maintenance",
+                description: "Precision balance with 0.0001g readability.",
+                maintenanceInstructions: "1. Calibrate with certified weights monthly.\n2. Clean weighing pan and chamber daily with soft brush.\n3. Check leveling before each use.\n4. Perform internal calibration weekly.\n5. Have professional recertification annually.",
+                lastUpdated: "2025-03-12",
+                history: [
+                    { date: "2025-03-12", action: "Calibration Drift", notes: "Needs professional recalibration" },
+                    { date: "2025-02-05", action: "Regular Cleaning", notes: "Done by lab assistant" }
+                ]
+            },
+            {
+                id: 6,
+                name: "Hotplate Stirrer",
+                category: "Heating Equipment",
+                location: "Room 102",
+                status: "undamaged",
+                description: "Combined hotplate and magnetic stirrer for sample preparation.",
+                maintenanceInstructions: "1. Clean surface after each use.\n2. Check temperature accuracy quarterly with calibrated thermometer.\n3. Inspect power cord monthly for wear.\n4. Test stirring function with different volumes quarterly.\n5. Check heating element for hot spots annually.",
+                lastUpdated: "2025-03-01",
+                history: [
+                    { date: "2025-03-01", action: "Temperature Calibration", notes: "Within specifications" },
+                    { date: "2025-01-15", action: "Stirrer Motor Check", notes: "Operating normally" }
+                ]
+            }
+        ];
+        
+        // DOM elements
+        const materialsList = document.getElementById('materials-list');
+        const searchInput = document.getElementById('search');
+        const statusFilter = document.getElementById('status-filter');
+        const addMaterialBtn = document.getElementById('add-material-btn');
+        
+        // Modals
+        const materialModal = document.getElementById('material-modal');
+        const editModal = document.getElementById('edit-modal');
+        const closeMaterialModal = document.getElementById('close-material-modal');
+        const closeEditModal = document.getElementById('close-edit-modal');
+        
+        // Modal content elements
+        const materialModalTitle = document.getElementById('material-modal-title');
+        const materialDetails = document.getElementById('material-details');
+        const maintenanceGuide = document.getElementById('maintenance-guide');
+        const materialHistory = document.getElementById('material-history');
+        
+        // Form elements
+        const materialForm = document.getElementById('material-form');
+        const editModalTitle = document.getElementById('edit-modal-title');
+        const materialIdInput = document.getElementById('material-id');
+        const materialNameInput = document.getElementById('material-name');
+        const materialCategoryInput = document.getElementById('material-category');
+        const materialLocationInput = document.getElementById('material-location');
+        const materialStatusInput = document.getElementById('material-status');
+        const materialDescriptionInput = document.getElementById('material-description');
+        const maintenanceInstructionsInput = document.getElementById('maintenance-instructions');
+        
+        // Buttons
+        const editMaterialBtn = document.getElementById('edit-material-btn');
+        const deleteMaterialBtn = document.getElementById('delete-material-btn');
+        const saveMaterialBtn = document.getElementById('save-material-btn');
+        
+        // Tab functionality
+        const tabs = document.querySelectorAll('.tab');
+        const tabPanels = document.querySelectorAll('.tab-panel');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and panels
+                tabs.forEach(t => t.classList.remove('active'));
+                tabPanels.forEach(p => p.classList.remove('active'));
+                
+                // Add active class to clicked tab
+                tab.classList.add('active');
+                
+                // Show corresponding panel
+                const targetPanel = document.getElementById(`${tab.dataset.tab}-panel`);
+                targetPanel.classList.add('active');
+            });
+        });
+        
+        // Event listeners
+        window.addEventListener('DOMContentLoaded', renderMaterials);
+        searchInput.addEventListener('input', filterMaterials);
+        statusFilter.addEventListener('change', filterMaterials);
+        addMaterialBtn.addEventListener('click', openAddMaterialModal);
+        closeMaterialModal.addEventListener('click', () => materialModal.style.display = 'none');
+        closeEditModal.addEventListener('click', () => editModal.style.display = 'none');
+        editMaterialBtn.addEventListener('click', editCurrentMaterial);
+        deleteMaterialBtn.addEventListener('click', deleteCurrentMaterial);
+        saveMaterialBtn.addEventListener('click', saveMaterial);
+        
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === materialModal) {
+                materialModal.style.display = 'none';
+            }
+            if (e.target === editModal) {
+                editModal.style.display = 'none';
+            }
+        });
+        
+        // Render material cards
+        function renderMaterials() {
+            materialsList.innerHTML = '';
+            
+            const searchTerm = searchInput.value.toLowerCase();
+            const statusValue = statusFilter.value;
+            
+            const filteredMaterials = materials.filter(material => {
+                const matchesSearch = material.name.toLowerCase().includes(searchTerm) || 
+                                      material.category.toLowerCase().includes(searchTerm) ||
+                                      material.description.toLowerCase().includes(searchTerm);
+                
+                const matchesStatus = statusValue === 'all' || material.status === statusValue;
+                
+                return matchesSearch && matchesStatus;
+            });
+            
+            if (filteredMaterials.length === 0) {
+                materialsList.innerHTML = '<p>No materials found matching your criteria.</p>';
+                return;
+            }
+            
+            filteredMaterials.forEach(material => {
+                const card = document.createElement('div');
+                card.className = 'material-card';
+                card.dataset.id = material.id;
+                
+                let statusClass, statusText;
+                switch (material.status) {
+                    case 'undamaged':
+                        statusClass = 'status-undamaged';
+                        statusText = 'tag-undamaged';
+                        break;
+                    case 'maintenance':
+                        statusClass = 'status-maintenance';
+                        statusText = 'tag-maintenance';
+                        break;
+                    case 'damaged':
+                        statusClass = 'status-damaged';
+                        statusText = 'tag-damaged';
+                        break;
+                }
+                
+                let statusDisplayText;
+                switch (material.status) {
+                    case 'undamaged':
+                        statusDisplayText = 'Undamaged';
+                        break;
+                    case 'maintenance':
+                        statusDisplayText = 'Maintenance Required';
+                        break;
+                    case 'damaged':
+                        statusDisplayText = 'Damaged';
+                        break;
+                }
+                
+                card.innerHTML = `
+                    <div class="status-indicator ${statusClass}"></div>
+                    <div class="card-content">
+                        <h3 class="card-title">${material.name}</h3>
+                        <p class="card-meta">${material.category} • ${material.location}</p>
+                        <p class="card-meta">Last updated: ${material.lastUpdated}</p>
+                        <span class="status-tag ${statusText}">${statusDisplayText}</span>
+                    </div>
+                `;
+                
+                card.addEventListener('click', () => openMaterialDetails(material.id));
+                materialsList.appendChild(card);
+            });
+        }
+        
+        // Filter materials based on search and status
+        function filterMaterials() {
+            renderMaterials();
+        }
+        
+        // Open material details modal
+        function openMaterialDetails(id) {
+            const material = materials.find(m => m.id === id);
+            if (!material) return;
+            
+            materialModalTitle.textContent = material.name;
+            
+            // Populate details tab
+            materialDetails.innerHTML = `
+                <div class="form-group">
+                    <label>Category:</label>
+                    <p>${material.category}</p>
+                </div>
+                <div class="form-group">
+                    <label>Location:</label>
+                    <p>${material.location}</p>
+                </div>
+                <div class="form-group">
+                    <label>Status:</label>
+                    <p><span class="status-tag ${material.status === 'undamaged' ? 'tag-undamaged' : material.status === 'maintenance' ? 'tag-maintenance' : 'tag-damaged'}">
+                        ${material.status === 'undamaged' ? 'Undamaged' : material.status === 'maintenance' ? 'Maintenance Required' : 'Damaged'}
+                    </span></p>
+                </div>
+                <div class="form-group">
+                    <label>Description:</label>
+                    <p>${material.description}</p>
+                </div>
+                <div class="form-group">
+                    <label>Last Updated:</label>
+                    <p>${material.lastUpdated}</p>
+                </div>
+            `;
+            
+            // Populate maintenance tab
+            const maintenanceSteps = material.maintenanceInstructions.split('\n');
+            maintenanceGuide.innerHTML = `
+                <h3>Maintenance Instructions</h3>
+                <ol class="maintenance-steps">
+                    ${maintenanceSteps.map(step => `<li>${step.replace(/^\d+\.\s/, '')}</li>`).join('')}
+                </ol>
+            `;
+            
+            // Populate history tab
+            if (material.history && material.history.length > 0) {
+                const historyHTML = material.history.map(entry => `
+                    <div class="history-entry">
+                        <h4>${entry.date} - ${entry.action}</h4>
+                        <p>${entry.notes}</p>
+                    </div>
+                `).join('');
+                
+                materialHistory.innerHTML = `
+                    <h3>Maintenance History</h3>
+                    ${historyHTML}
+                `;
+            } else {
+                materialHistory.innerHTML = '<p>No history records available.</p>';
+            }
+            
+            // Reset active tab to details
+            document.querySelector('.tab.active').classList.remove('active');
+            document.querySelector('.tab-panel.active').classList.remove('active');
+            document.querySelector('[data-tab="details"]').classList.add('active');
+            document.getElementById('details-panel').classList.add('active');
+            
+            // Store current material ID for edit/delete operations
+            materialModal.dataset.currentId = id;
+            
+            materialModal.style.display = 'block';
+        }
+        
+        // Open add material modal
+        function openAddMaterialModal() {
+            editModalTitle.textContent = 'Add New Material';
+            materialIdInput.value = '';
+            materialForm.reset();
+            editModal.style.display = 'block';
+        }
+        
+        // Edit current material
+        function editCurrentMaterial() {
+            const id = parseInt(materialModal.dataset.currentId);
+            const material = materials.find(m => m.id === id);
+            if (!material) return;
+            
+            editModalTitle.textContent = 'Edit Material';
+            materialIdInput.value = material.id;
+            materialNameInput.value = material.name;
+            materialCategoryInput.value = material.category;
+            materialLocationInput.value = material.location;
+            materialStatusInput.value = material.status;
+            materialDescriptionInput.value = material.description;
+            maintenanceInstructionsInput.value = material.maintenanceInstructions;
+            
+            materialModal.style.display = 'none';
+            editModal.style.display = 'block';
+        }
+        
+        // Save material (add or update)
+        function saveMaterial(e) {
+            e.preventDefault();
+            
+            const formData = {
+                name: materialNameInput.value,
+                category: materialCategoryInput.value,
+                location: materialLocationInput.value,
+                status: materialStatusInput.value,
+                description: materialDescriptionInput.value,
+                maintenanceInstructions: maintenanceInstructionsInput.value,
+                lastUpdated: new Date().toISOString().split('T')[0]
+            };
+            
+            const id = materialIdInput.value;
+            
+            if (id) {
+                // Update existing material
+                const index = materials.findIndex(m => m.id === parseInt(id));
+                if (index !== -1) {
+                    materials[index] = {
+                        ...materials[index],
+                        ...formData
+                    };
+                }
+            } else {
+                // Add new material
+                const newId = Math.max(...materials.map(m => m.id), 0) + 1;
+                materials.push({
+                    id: newId,
+                    ...formData,
+                    history: []
+                });
+            }
+            
+            editModal.style.display = 'none';
+            renderMaterials();
+        }
+        
+        // Delete current material
+        function deleteCurrentMaterial() {
+            const id = parseInt(materialModal.dataset.currentId);
+            if (confirm('Are you sure you want to delete this material?')) {
+                materials = materials.filter(m => m.id !== id);
+                materialModal.style.display = 'none';
+                renderMaterials();
+            }
+        }
+    </script>
+</body>
+</html>
